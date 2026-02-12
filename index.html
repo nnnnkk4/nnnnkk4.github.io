@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Генератор ASCII-арта из галереи</title>
+<style>
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+}
+body {
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+line-height: 1.6;
+color: #333;
+background: linear-gradient(135deg, #2a0a1a, #4a0f3a, #5d1a4d);
+padding: 20px;
+min-height: 100vh;
+background-attachment: fixed;
+}
+.container {
+max-width: 1100px;
+margin: 0 auto;
+background: rgba(255, 255, 255, 0.94);
+border-radius: 20px;
+box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+padding: 35px;
+text-align: center;
+position: relative;
+overflow: hidden;
+}
+.container::before {
+content: "";
+position: absolute;
+top: -50%;
+left: -50%;
+width: 200%;
+height: 200%;
+background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+z-index: 0;
+border-radius: 50%;
+}
+.content {
+position: relative;
+z-index: 1;
+}
+h1 {
+font-size: 3.2rem;
+margin-bottom: 15px;
+color: #5d1a4d;
+text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+background: linear-gradient(to right, #5d1a4d, #8e2b7a, #c0397b, #e74c8c);
+-webkit-background-clip: text;
+background-clip: text;
+color: transparent;
+letter-spacing: -0.5px;
+position: relative;
+}
+h1::after {
+content: "";
+position: absolute;
+bottom: -8px;
+left: 50%;
+transform: translateX(-50%);
+width: 80px;
+height: 4px;
+background: linear-gradient(to right, #c0397b, #e74c8c);
+border-radius: 2px;
+}
+.subtitle {
+font-size: 1.35rem;
+color: #5d1a4d;
+margin-bottom: 30px;
+font-weight: 500;
+max-width: 700px;
+margin-left: auto;
+margin-right: auto;
+line-height: 1.5;
+}
+.gallery-section {
+margin: 25px 0 35px;
+display: flex;
+flex-direction: column;
+gap: 20px;
+}
+.gallery-title {
+font-size: 1.4rem;
+color: #5d1a4d;
+margin-bottom: 15px;
+font-weight: 600;
+}
+.gallery {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+gap: 15px;
+max-height: 200px;
+overflow-y: auto;
+padding: 15px;
+background: rgba(240, 230, 235, 0.4);
+border-radius: 15px;
+border: 2px solid #e74c8c;
+}
+.gallery img {
+width: 100%;
+height: 100px;
+object-fit: cover;
+border-radius: 8px;
+cursor: pointer;
+transition: all 0.3s ease;
+border: 2px solid transparent;
+}
+.gallery img:hover {
+transform: scale(1.05);
+border-color: #c0397b;
+box-shadow: 0 4px 12px rgba(192, 57, 123, 0.4);
+}
+.gallery img.selected {
+border-color: #e74c8c;
+box-shadow: 0 0 0 3px #e74c8c, 0 4px 12px rgba(192, 57, 123, 0.6);
+}
+.preview-container {
+margin: 30px 0;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 30px;
+min-height: 150px;
+}
+.image-preview-container {
+position: relative;
+border-radius: 15px;
+overflow: hidden;
+box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+max-width: 100%;
+display: none;
+}
+.image-preview {
+max-width: 100%;
+max-height: 350px;
+display: block;
+border-radius: 15px;
+}
+.ascii-container {
+width: 100%;
+background: #1e1a2a;
+color: #f8f9fa;
+border-radius: 15px;
+padding: 25px;
+font-family: monospace, monospace;
+font-size: 8px;
+line-height: 8px;
+letter-spacing: 1px;
+overflow: auto;
+box-shadow: 0 10px 35px rgba(0,0,0,0.4);
+text-align: left;
+white-space: pre;
+display: none;
+max-height: 600px;
+position: relative;
+border: 1px solid rgba(255,255,255,0.1);
+box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 35px rgba(0,0,0,0.4);
+}
+.ascii-container::before {
+content: "";
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+height: 8px;
+background: linear-gradient(to right, #ff416c, #e74c8c);
+border-radius: 15px 15px 0 0;
+opacity: 0.85;
+}
+.controls {
+display: flex;
+justify-content: center;
+gap: 18px;
+margin: 25px 0 35px;
+flex-wrap: wrap;
+}
+.btn {
+background: linear-gradient(to right, #c0397b, #5d1a4d);
+color: white;
+border: none;
+padding: 14px 32px;
+font-size: 1.15rem;
+border-radius: 50px;
+cursor: pointer;
+transition: all 0.35s ease;
+box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+font-weight: 600;
+min-width: 160px;
+position: relative;
+overflow: hidden;
+z-index: 1;
+}
+.btn::after {
+content: "";
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: linear-gradient(to right, #5d1a4d, #3a0f2a);
+z-index: -1;
+transition: opacity 0.35s ease;
+opacity: 0;
+}
+.btn:hover::after {
+opacity: 1;
+}
+.btn:hover {
+transform: translateY(-3px);
+box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+.btn:active {
+transform: translateY(1px);
+box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+.btn-reset {
+background: linear-gradient(to right, #e74c3c, #c0392b);
+}
+.btn-copy {
+background: linear-gradient(to right, #2ecc71, #27ae60);
+}
+.btn-download {
+background: linear-gradient(to right, #9b59b6, #8e44ad);
+}
+.btn-generate {
+background: linear-gradient(to right, #e74c8c, #c0397b);
+padding-left: 25px;
+padding-right: 25px;
+min-width: 180px;
+font-size: 1.25rem;
+box-shadow: 0 6px 20px rgba(231, 76, 140, 0.45);
+}
+.btn-generate:hover {
+box-shadow: 0 8px 25px rgba(231, 76, 140, 0.6);
+transform: translateY(-4px);
+}
+.settings-section {
+background: rgba(248, 240, 245, 0.75);
+border-radius: 20px;
+padding: 25px;
+margin: 30px 0;
+box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+border: 1px solid rgba(0,0,0,0.08);
+}
+.settings-title {
+font-size: 1.6rem;
+color: #5d1a4d;
+margin-bottom: 20px;
+font-weight: 700;
+}
+.settings-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+gap: 25px;
+margin-top: 15px;
+}
+.setting-item {
+display: flex;
+flex-direction: column;
+text-align: left;
+}
+.setting-label {
+margin-bottom: 8px;
+font-weight: 600;
+color: #5d1a4d;
+display: flex;
+justify-content: space-between;
+}
+.setting-control {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+input[type="range"] {
+width: 100%;
+height: 8px;
+border-radius: 4px;
+background: #f0e6eb;
+outline: none;
+transition: all 0.2s ease;
+}
+input[type="range"]::-webkit-slider-thumb {
+-webkit-appearance: none;
+width: 22px;
+height: 22px;
+border-radius: 50%;
+background: #e74c8c;
+cursor: pointer;
+box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+transition: all 0.2s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+transform: scale(1.2);
+background: #c0397b;
+box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+}
+input[type="checkbox"] {
+width: 20px;
+height: 20px;
+cursor: pointer;
+accent-color: #e74c8c;
+}
+.loading {
+display: none;
+margin: 25px auto;
+font-size: 1.5rem;
+color: #5d1a4d;
+font-weight: bold;
+position: relative;
+padding-left: 30px;
+}
+.loading::before {
+content: "";
+position: absolute;
+left: 0;
+top: 50%;
+transform: translateY(-50%);
+width: 20px;
+height: 20px;
+border: 3px solid #e74c8c;
+border-top-color: transparent;
+border-radius: 50%;
+animation: spin 1s linear infinite;
+}
+@keyframes spin {
+to { transform: translateY(-50%) rotate(360deg); }
+}
+.error {
+color: #e74c3c;
+font-weight: bold;
+margin-top: 15px;
+display: none;
+padding: 12px;
+background: rgba(231, 76, 60, 0.1);
+border-radius: 10px;
+border-left: 4px solid #e74c3c;
+}
+.footer {
+margin-top: 35px;
+color: #5d1a4d;
+font-size: 1.05rem;
+padding-top: 25px;
+border-top: 2px solid rgba(0,0,0,0.08);
+line-height: 1.6;
+}
+.footer p {
+max-width: 700px;
+margin: 0 auto;
+}
+.feature-highlights {
+display: flex;
+justify-content: center;
+flex-wrap: wrap;
+gap: 25px;
+margin: 30px 0;
+text-align: left;
+}
+.feature {
+background: rgba(248, 240, 245, 0.85);
+border-radius: 15px;
+padding: 20px;
+min-width: 220px;
+box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+transition: all 0.3s ease;
+border: 1px solid rgba(0,0,0,0.07);
+}
+.feature:hover {
+transform: translateY(-5px);
+box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+border-color: rgba(231, 76, 140, 0.3);
+}
+.feature-title {
+font-weight: 700;
+font-size: 1.3rem;
+color: #5d1a4d;
+margin-bottom: 10px;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+.feature-icon {
+font-size: 1.8rem;
+}
+.no-images {
+padding: 25px;
+background: rgba(231, 76, 140, 0.1);
+border-radius: 15px;
+border: 2px dashed #e74c8c;
+color: #5d1a4d;
+font-weight: 500;
+margin: 20px 0;
+display: none;
+}
+.security-warning {
+background: rgba(255, 235, 200, 0.9);
+border-left: 4px solid #f39c12;
+padding: 15px;
+border-radius: 8px;
+margin: 20px 0;
+font-size: 0.95rem;
+color: #8e44ad;
+display: none;
+}
+@media (max-width: 768px) {
+.container {
+padding: 25px;
+border-radius: 15px;
+}
+h1 {
+font-size: 2.5rem;
+}
+.subtitle {
+font-size: 1.15rem;
+}
+.gallery {
+grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+max-height: 180px;
+}
+.controls {
+flex-direction: column;
+align-items: center;
+}
+.btn {
+width: 100%;
+max-width: 320px;
+padding: 12px 25px;
+}
+.settings-grid {
+grid-template-columns: 1fr;
+}
+.feature-highlights {
+flex-direction: column;
+align-items: center;
+}
+.feature {
+width: 100%;
+max-width: 400px;
+}
+}
+@media (max-width: 480px) {
+.container {
+padding: 20px 15px;
+}
+h1 {
+font-size: 2.2rem;
+}
+.subtitle {
+font-size: 1.05rem;
+}
+.btn {
+padding: 10px 20px;
+font-size: 1.05rem;
+min-width: auto;
+}
+.settings-section {
+padding: 20px 15px;
+}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="content">
+<h1>Chu ASCII</h1>
+</div>
+</div>
+<div class="gallery-section">
+<div class="gallery-title">Выберите изображение из галереи:</div>
+<div class="gallery" id="imageGallery">
+<!-- Изображения будут добавлены через JavaScript -->
+</div>
+<div class="no-images" id="noImagesMessage">
+</div>
+</div>
+<div class="security-warning" id="securityWarning">
+</div>
+<div class="error" id="errorContainer"></div>
+<div class="loading" id="loading">Преобразование изображения... Пожалуйста, подождите</div>
+<div class="preview-container">
+<div class="image-preview-container" id="previewContainer">
+<img id="imagePreview" class="image-preview" alt="Предпросмотр изображения">
+</div>
+<pre id="asciiOutput" class="ascii-container"></pre>
+</div>
+<div class="settings-section">
+<div class="settings-title">Настройки</div>
+<div class="settings-grid">
+<div class="setting-item">
+<div class="setting-label">
+<span>Ширина (символов)</span>
+<span id="widthValue">120</span>
+</div>
+<input type="range" id="widthSlider" min="40" max="240" value="120" step="5">
+</div>
+<div class="setting-item">
+<div class="setting-label">
+<span>Высота (строк)</span>
+<span id="heightValue">60</span>
+</div>
+<input type="range" id="heightSlider" min="20" max="120" value="60" step="5">
+</div>
+<div class="setting-item">
+<div class="setting-label">
+<span>Плотность символов</span>
+<span id="densityValue">100%</span>
+</div>
+<input type="range" id="densitySlider" min="20" max="100" value="100" step="5">
+</div>
+<div class="setting-item">
+<div class="setting-label">
+<span>Контраст</span>
+<span id="contrastValue">100%</span>
+</div>
+<input type="range" id="contrastSlider" min="50" max="200" value="100" step="5">
+</div>
+<div class="setting-item">
+<div class="setting-label">
+<span>Яркость</span>
+<span id="brightnessValue">100%</span>
+</div>
+<input type="range" id="brightnessSlider" min="50" max="200" value="100" step="5">
+</div>
+<div class="setting-item">
+<div class="setting-label">
+<span>Инвертировать цвета</span>
+<span id="invertStatus">Нет</span>
+</div>
+<div class="setting-control">
+<input type="checkbox" id="invertCheckbox">
+<span>Включить для светлого фона</span>
+</div>
+</div>
+</div>
+</div>
+<div class="controls">
+<button id="convertBtn" class="btn btn-generate">✨ Сгенерировать ASCII-арт</button>
+<button id="copyBtn" class="btn btn-copy">📋 Копировать</button>
+<button id="downloadTextBtn" class="btn btn-download">💾 Скачать как текст</button>
+<button id="downloadImageBtn" class="btn btn-download">🖼️ Скачать как изображение</button>
+<button id="resetBtn" class="btn btn-reset">↺ Сбросить всё</button>
+</div>
+<div class="footer">
+</div>
+</div>
+</div>
+<canvas id="canvas" style="display:none;"></canvas>
+<canvas id="outputCanvas" style="display:none;"></canvas>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+// DOM Elements
+const imageGallery = document.getElementById('imageGallery');
+const noImagesMessage = document.getElementById('noImagesMessage');
+const securityWarning = document.getElementById('securityWarning');
+const imagePreview = document.getElementById('imagePreview');
+const previewContainer = document.getElementById('previewContainer');
+const asciiOutput = document.getElementById('asciiOutput');
+const convertBtn = document.getElementById('convertBtn');
+const copyBtn = document.getElementById('copyBtn');
+const downloadTextBtn = document.getElementById('downloadTextBtn');
+const downloadImageBtn = document.getElementById('downloadImageBtn');
+const resetBtn = document.getElementById('resetBtn');
+const loading = document.getElementById('loading');
+const errorContainer = document.getElementById('errorContainer');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+const outputCanvas = document.getElementById('outputCanvas');
+const outputCtx = outputCanvas.getContext('2d');
+
+// Settings elements
+const widthSlider = document.getElementById('widthSlider');
+const heightSlider = document.getElementById('heightSlider');
+const densitySlider = document.getElementById('densitySlider');
+const contrastSlider = document.getElementById('contrastSlider');
+const brightnessSlider = document.getElementById('brightnessSlider');
+const invertCheckbox = document.getElementById('invertCheckbox');
+
+// Value displays
+const widthValue = document.getElementById('widthValue');
+const heightValue = document.getElementById('heightValue');
+const densityValue = document.getElementById('densityValue');
+const contrastValue = document.getElementById('contrastValue');
+const brightnessValue = document.getElementById('brightnessValue');
+const invertStatus = document.getElementById('invertStatus');
+
+// Character sets from lightest to darkest
+const charset = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
+const simpleCharset = " .:-=+*#%@";
+let currentCharset = charset;
+
+// Show security warning if opened via file:// protocol
+if (window.location.protocol === 'file:') {
+  securityWarning.style.display = 'block';
+}
+
+// Load images from the same folder as HTML file
+function loadImagesFromFolder() {
+  // Exact image filenames as specified by user
+  const imageNames = [
+    'img1.jpg',
+    'img2.png',
+    'img3.png',
+    'img4.png',
+    'img6.png',
+    'img7.png',
+    'img8.png',
+    'img9.png'
+  ];
+  
+  let loadedCount = 0;
+  let displayedCount = 0;
+  const totalImages = imageNames.length;
+  
+  imageNames.forEach(name => {
+    const img = new Image();
+    // Do NOT set crossOrigin for local files to avoid CORS issues
+    img.src = name + '?_=' + Date.now(); // Cache busting
+    
+    img.onload = function() {
+      loadedCount++;
+      displayedCount++;
+      
+      // Create gallery item
+      const galleryImg = document.createElement('img');
+      galleryImg.src = name;
+      galleryImg.alt = `Изображение ${displayedCount}`;
+      galleryImg.dataset.path = name;
+      
+      galleryImg.addEventListener('click', () => {
+        // Remove selected class from all images
+        document.querySelectorAll('#imageGallery img').forEach(img => img.classList.remove('selected'));
+        // Add selected class to clicked image
+        galleryImg.classList.add('selected');
+        // Load the image
+        loadImage(name);
+      });
+      
+      // Add error handling for gallery images
+      galleryImg.onerror = function() {
+        this.style.display = 'none';
+      };
+      
+      imageGallery.appendChild(galleryImg);
+      
+      // Show gallery if at least one image loaded
+      if (displayedCount === 1) {
+        noImagesMessage.style.display = 'none';
+      }
+    };
+    
+    img.onerror = function() {
+      loadedCount++;
+      // Show message if no images loaded after trying all paths
+      if (loadedCount === totalImages && displayedCount === 0) {
+        noImagesMessage.style.display = 'block';
+      }
+    };
+  });
+}
+
+// Initialize gallery from local folder
+loadImagesFromFolder();
+
+// Initialize settings display
+widthValue.textContent = widthSlider.value;
+heightValue.textContent = heightSlider.value;
+densityValue.textContent = `${densitySlider.value}%`;
+contrastValue.textContent = `${contrastSlider.value}%`;
+brightnessValue.textContent = `${brightnessSlider.value}%`;
+invertStatus.textContent = invertCheckbox.checked ? 'Да' : 'Нет';
+
+// Settings event listeners
+widthSlider.addEventListener('input', () => {
+  widthValue.textContent = widthSlider.value;
+});
+heightSlider.addEventListener('input', () => {
+  heightValue.textContent = heightSlider.value;
+});
+densitySlider.addEventListener('input', () => {
+  densityValue.textContent = `${densitySlider.value}%`;
+  // Update character set based on density
+  if (densitySlider.value < 50) {
+    currentCharset = simpleCharset;
+  } else {
+    currentCharset = charset;
+  }
+});
+contrastSlider.addEventListener('input', () => {
+  contrastValue.textContent = `${contrastSlider.value}%`;
+});
+brightnessSlider.addEventListener('input', () => {
+  brightnessValue.textContent = `${brightnessSlider.value}%`;
+});
+invertCheckbox.addEventListener('change', () => {
+  invertStatus.textContent = invertCheckbox.checked ? 'Да' : 'Нет';
+});
+
+// Load image function
+function loadImage(src) {
+  const img = new Image();
+  // Do NOT set crossOrigin for local files
+  img.onload = function() {
+    // Check if image is too large
+    if (img.width > 4000 || img.height > 4000) {
+      showError('Изображение слишком большое. Пожалуйста, используйте изображение меньше 4000x4000 пикселей.');
+      return;
+    }
+    imagePreview.src = src;
+    previewContainer.style.display = 'block';
+    asciiOutput.style.display = 'none';
+    convertBtn.disabled = false;
+    errorContainer.style.display = 'none';
+  };
+  img.onerror = function() {
+    showError('Не удалось загрузить изображение. Убедитесь, что файл существует в той же папке.');
+    previewContainer.style.display = 'none';
+  };
+  img.src = src + '?_=' + Date.now(); // Cache busting
+}
+
+// Convert image to ASCII
+convertBtn.addEventListener('click', convertImageToAscii);
+
+function convertImageToAscii() {
+  if (!imagePreview.src) {
+    showError('Пожалуйста, выберите изображение из галереи');
+    return;
+  }
+  
+  // Verify image is fully loaded and has valid dimensions
+  if (!imagePreview.complete || imagePreview.naturalWidth === 0 || imagePreview.naturalHeight === 0) {
+    showError('Изображение еще не загружено полностью. Подождите несколько секунд и попробуйте снова.');
+    return;
+  }
+  
+  loading.style.display = 'block';
+  asciiOutput.style.display = 'none';
+  convertBtn.disabled = true;
+  errorContainer.style.display = 'none';
+
+  setTimeout(() => {
+    try {
+      // Get settings values
+      const maxWidth = parseInt(widthSlider.value);
+      const maxHeight = parseInt(heightSlider.value);
+      const density = parseInt(densitySlider.value) / 100;
+      const contrast = parseInt(contrastSlider.value) / 100;
+      const brightness = parseInt(brightnessSlider.value) / 100;
+      const invert = invertCheckbox.checked;
+
+      // Calculate dimensions preserving aspect ratio using natural dimensions
+      const originalWidth = imagePreview.naturalWidth;
+      const originalHeight = imagePreview.naturalHeight;
+      
+      if (originalWidth <= 0 || originalHeight <= 0) {
+        throw new Error('Недопустимые размеры изображения');
+      }
+      
+      // Calculate aspect ratio (accounting for character aspect ratio ~0.55)
+      const aspectRatio = (originalHeight / originalWidth) * 0.55;
+      let width = maxWidth;
+      let height = Math.round(width * aspectRatio);
+      
+      // If height exceeds maxHeight, recalculate based on maxHeight
+      if (height > maxHeight) {
+        height = maxHeight;
+        width = Math.round(height / aspectRatio);
+        if (width > maxWidth) {
+          width = maxWidth;
+          height = Math.round(width * aspectRatio);
+        }
+      }
+      
+      // Ensure minimum dimensions
+      if (width < 1) width = 1;
+      if (height < 1) height = 1;
+      
+      // Validate dimensions are finite numbers
+      if (!Number.isFinite(width) || !Number.isFinite(height)) {
+        throw new Error('Недопустимые размеры холста. Проверьте настройки ширины и высоты.');
+      }
+      
+      // Set reasonable limits to prevent browser crashes (much higher than slider max)
+      const MAX_CANVAS_SIZE = 10000;
+      if (width > MAX_CANVAS_SIZE || height > MAX_CANVAS_SIZE) {
+        throw new Error(`Размеры холста слишком большие (максимум ${MAX_CANVAS_SIZE}x${MAX_CANVAS_SIZE}). Уменьшите настройки ширины/высоты.`);
+      }
+      
+      // Set canvas dimensions
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Clear canvas first
+      ctx.clearRect(0, 0, width, height);
+      
+      // Draw image on canvas
+      ctx.drawImage(imagePreview, 0, 0, width, height);
+      
+      // Get pixel data with comprehensive error handling
+      let imageData;
+      try {
+        imageData = ctx.getImageData(0, 0, width, height);
+      } catch (e) {
+        console.error("Canvas security error:", e);
+        // More helpful error message for CORS/local file issues
+        throw new Error("Ошибка доступа к данным изображения. Если вы открываете файл напрямую через файловую систему, запустите локальный веб-сервер для работы с изображениями. Или попробуйте другое изображение.");
+      }
+      
+      const data = imageData.data;
+      
+      // Validate pixel data length
+      if (data.length !== width * height * 4) {
+        throw new Error("Поврежденные данные изображения. Попробуйте другое изображение.");
+      }
+      
+      // Apply contrast and brightness with bounds checking
+      for (let i = 0; i < data.length; i += 4) {
+        // Apply brightness with clamping
+        let r = clamp(data[i] * brightness);
+        let g = clamp(data[i+1] * brightness);
+        let b = clamp(data[i+2] * brightness);
+        
+        // Apply contrast with clamping
+        r = clamp(((r - 128) * contrast) + 128);
+        g = clamp(((g - 128) * contrast) + 128);
+        b = clamp(((b - 128) * contrast) + 128);
+        
+        data[i] = r;
+        data[i+1] = g;
+        data[i+2] = b;
+        // Alpha channel remains unchanged
+      }
+      
+      ctx.putImageData(imageData, 0, 0);
+      
+      // Generate ASCII art with robust indexing
+      let asciiArt = '';
+      const charsetLength = currentCharset.length;
+      
+      for (let y = 0; y < height; y++) {
+        let line = '';
+        for (let x = 0; x < width; x++) {
+          const pixelIndex = (y * width + x) * 4;
+          
+          // Safety check for array bounds
+          if (pixelIndex + 2 >= data.length) {
+            line += ' ';
+            continue;
+          }
+          
+          const r = data[pixelIndex];
+          const g = data[pixelIndex + 1];
+          const b = data[pixelIndex + 2];
+          
+          // Calculate grayscale using luminance method
+          let gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+          
+          // Apply invert if needed
+          if (invert) {
+            gray = 255 - gray;
+          }
+          
+          // Map grayscale to character with safe indexing
+          let charIndex = Math.floor(gray / 255 * (charsetLength - 1));
+          charIndex = Math.max(0, Math.min(charIndex, charsetLength - 1));
+          
+          line += currentCharset[charIndex];
+        }
+        asciiArt += line + '\n';
+      }
+      
+      // Display result
+      asciiOutput.textContent = asciiArt;
+      asciiOutput.style.display = 'block';
+      
+      // Adjust font size based on width for better readability
+      const fontSize = Math.max(3, Math.min(12, Math.floor(1000 / width)));
+      asciiOutput.style.fontSize = `${fontSize}px`;
+      asciiOutput.style.lineHeight = `${fontSize * 1.2}px`;
+      
+    } catch (error) {
+      console.error("Conversion error:", error);
+      showError("Ошибка при преобразовании: " + (error.message || "Неизвестная ошибка. Попробуйте другое изображение или настройки."));
+    } finally {
+      loading.style.display = 'none';
+      convertBtn.disabled = false;
+    }
+  }, 50);
+}
+
+// Helper function to clamp values between 0 and 255
+function clamp(value) {
+  return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+// Show error message
+function showError(message) {
+  errorContainer.textContent = message;
+  errorContainer.style.display = 'block';
+  setTimeout(() => {
+    errorContainer.style.display = 'none';
+  }, 10000);
+}
+
+// Copy ASCII art to clipboard
+copyBtn.addEventListener('click', () => {
+  if (!asciiOutput.textContent) {
+    showError('Нет ASCII-арта для копирования. Пожалуйста, сначала сгенерируйте его.');
+    return;
+  }
+  navigator.clipboard.writeText(asciiOutput.textContent).then(() => {
+    const originalText = copyBtn.textContent;
+    copyBtn.textContent = '✓ Скопировано!';
+    copyBtn.style.background = 'linear-gradient(to right, #27ae60, #219653)';
+    setTimeout(() => {
+      copyBtn.textContent = originalText;
+      copyBtn.style.background = '';
+    }, 2500);
+  }).catch(err => {
+    console.error('Copy error:', err);
+    showError('Не удалось скопировать. Пожалуйста, выделите и скопируйте текст вручную.');
+  });
+});
+
+// Download ASCII as text file
+downloadTextBtn.addEventListener('click', () => {
+  if (!asciiOutput.textContent) {
+    showError('Нет ASCII-арта для скачивания. Пожалуйста, сначала сгенерируйте его.');
+    return;
+  }
+  const blob = new Blob([asciiOutput.textContent], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ascii_art_${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 0);
+});
+
+// Download ASCII as PNG image
+downloadImageBtn.addEventListener('click', () => {
+  if (!asciiOutput.textContent) {
+    showError('Нет ASCII-арта для скачивания. Пожалуйста, сначала сгенерируйте его.');
+    return;
+  }
+  const fontSize = parseFloat(asciiOutput.style.fontSize);
+  const lineHeight = parseFloat(asciiOutput.style.lineHeight);
+  const lines = asciiOutput.textContent.split('\n').filter(line => line.length > 0);
+  
+  if (lines.length === 0) {
+    showError('Невозможно создать изображение из пустого ASCII-арта.');
+    return;
+  }
+  
+  const charWidth = fontSize * 0.6;
+  const padding = 20;
+  
+  // Calculate canvas dimensions with safety limits
+  const textWidth = lines[0].length * charWidth;
+  const textHeight = lines.length * lineHeight;
+  
+  const canvasWidth = Math.min(textWidth + padding * 2, 5000);
+  const canvasHeight = Math.min(textHeight + padding * 2, 5000);
+  
+  if (canvasWidth <= 0 || canvasHeight <= 0) {
+    showError('Невозможно создать изображение: недопустимые размеры.');
+    return;
+  }
+  
+  outputCanvas.width = canvasWidth;
+  outputCanvas.height = canvasHeight;
+  
+  // Draw background
+  outputCtx.fillStyle = '#1e1a2a';
+  outputCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+  
+  // Draw decorative border
+  outputCtx.fillStyle = '#e74c8c';
+  outputCtx.fillRect(0, 0, canvasWidth, 10);
+  outputCtx.fillRect(0, canvasHeight - 10, canvasWidth, 10);
+  outputCtx.fillRect(0, 0, 10, canvasHeight);
+  outputCtx.fillRect(canvasWidth - 10, 0, 10, canvasHeight);
+  
+  // Draw ASCII text
+  outputCtx.fillStyle = '#f8f9fa';
+  outputCtx.font = `${fontSize}px monospace`;
+  outputCtx.textBaseline = 'top';
+  
+  // Draw each line with bounds checking
+  for (let i = 0; i < lines.length; i++) {
+    if (i * lineHeight + padding > canvasHeight) break;
+    outputCtx.fillText(lines[i], padding, padding + (i * lineHeight));
+  }
+  
+  // Trigger download
+  outputCanvas.toBlob(blob => {
+    if (!blob) {
+      showError('Ошибка создания изображения. Попробуйте уменьшить размер ASCII-арта.');
+      return;
+    }
+    
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ascii_art_image_${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
+  }, 'image/png', 0.95);
+});
+
+// Reset everything
+resetBtn.addEventListener('click', () => {
+  document.querySelectorAll('#imageGallery img').forEach(img => img.classList.remove('selected'));
+  imagePreview.src = '';
+  previewContainer.style.display = 'none';
+  asciiOutput.textContent = '';
+  asciiOutput.style.display = 'none';
+  convertBtn.disabled = true;
+  errorContainer.style.display = 'none';
+  widthSlider.value = 120;
+  heightSlider.value = 60;
+  densitySlider.value = 100;
+  contrastSlider.value = 100;
+  brightnessSlider.value = 100;
+  invertCheckbox.checked = false;
+  widthValue.textContent = widthSlider.value;
+  heightValue.textContent = heightSlider.value;
+  densityValue.textContent = `${densitySlider.value}%`;
+  contrastValue.textContent = `${contrastSlider.value}%`;
+  brightnessValue.textContent = `${brightnessSlider.value}%`;
+  invertStatus.textContent = 'Нет';
+  currentCharset = charset;
+});
+
+// Initialize
+convertBtn.disabled = true;
+});
+</script>
+</body>
+</html>
+
